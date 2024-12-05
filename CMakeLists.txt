@@ -11,15 +11,9 @@ endif()
 
 project(nontype_functional VERSION 1.0.1 LANGUAGES CXX)
 
-if(NOT DEFINED PROJECT_IS_TOP_LEVEL)
-    if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-        set(PROJECT_IS_TOP_LEVEL TRUE)
-    else()
-        set(PROJECT_IS_TOP_LEVEL FALSE)
-    endif()
-endif()
 
 include(CTest)
+include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -55,23 +49,36 @@ target_include_directories(nontype_functional
 )
 target_compile_features(nontype_functional INTERFACE cxx_std_20)
 
-if(PROJECT_IS_TOP_LEVEL)
-    set(_version_filename "nontype_functional-config-version.cmake")
-    write_basic_package_version_file(
-        ${_version_filename}
-        COMPATIBILITY SameMajorVersion
-    )
-    install(TARGETS nontype_functional
-            EXPORT nontype_functional-config)
-    install(EXPORT nontype_functional-config
-            NAMESPACE std23::
-            DESTINATION lib/cmake/${PROJECT_NAME})
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${_version_filename}"
-            DESTINATION lib/cmake/${PROJECT_NAME})
-    install(FILES "$<TARGET_PROPERTY:nontype_functional,INTERFACE_SOURCES>"
-            DESTINATION include/std23)
-endif()
 
-if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
+install(TARGETS nontype_functional
+        EXPORT nontype_functional-targets)
+install(EXPORT nontype_functional-targets
+        NAMESPACE std23::
+        DESTINATION lib/cmake/${PROJECT_NAME})
+
+configure_package_config_file(
+    ${PROJECT_NAME}.config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+INSTALL_DESTINATION
+    ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/nontype_functional-config-version.cmake
+    VERSION
+        ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/nontype_functional-config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/nontype_functional-config-version.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)
+
+install(FILES "$<TARGET_PROPERTY:nontype_functional,INTERFACE_SOURCES>"
+        DESTINATION include/std23)
+
+if(BUILD_TESTING)
     add_subdirectory("tests")
 endif()
